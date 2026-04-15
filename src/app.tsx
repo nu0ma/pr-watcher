@@ -8,11 +8,12 @@ import { Footer } from "./components/footer.js";
 
 interface AppProps {
   intervalMinutes: number;
+  demo?: boolean;
 }
 
-export function App({ intervalMinutes }: AppProps) {
+export function App({ intervalMinutes, demo = false }: AppProps) {
   const intervalMs = intervalMinutes * 60 * 1000;
-  const { data, refresh } = useGitHub(intervalMs);
+  const { data, refresh } = useGitHub(intervalMs, demo);
   const { exit } = useApp();
   const { rows } = useWindowSize();
 
