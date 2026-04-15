@@ -66,13 +66,13 @@ export function PRRow({
           </Text>
         </Box>
       )}
-      {commentsCount !== undefined && (
-        <Box width={commentsWidth} flexShrink={0}>
+      <Box width={commentsWidth} flexShrink={0}>
+        {commentsCount !== undefined && (
           <Text color={commentsCount > 0 ? "yellow" : "gray"}>
             💬 {commentsCount}
           </Text>
-        </Box>
-      )}
+        )}
+      </Box>
     </Box>
   );
 }

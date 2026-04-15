@@ -52,13 +52,13 @@ export function Section({
             STATUS
           </Text>
         </Box>
-        {showComments && (
-          <Box width={8} flexShrink={0}>
+        <Box width={8} flexShrink={0}>
+          {showComments && (
             <Text dimColor bold>
               💬
             </Text>
-          </Box>
-        )}
+          )}
+        </Box>
       </Box>
       {children}
     </Box>
