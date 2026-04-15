@@ -233,8 +233,108 @@ function buildActionRequired(
   return actions;
 }
 
-export function useGitHub(intervalMs: number) {
-  const [data, setData] = useState<DashboardData>({
+function getDemoData(): DashboardData {
+  return {
+    username: "octocat",
+    myPRs: [
+      {
+        number: 142,
+        title: "feat: add dark mode support",
+        repo: "web-app",
+        repoFullName: "acme/web-app",
+        url: "https://github.com/acme/web-app/pull/142",
+        author: "octocat",
+        commentsCount: 3,
+        isDraft: false,
+        reviewDecision: "APPROVED",
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        number: 87,
+        title: "fix: resolve memory leak in WebSocket handler",
+        repo: "api-server",
+        repoFullName: "acme/api-server",
+        url: "https://github.com/acme/api-server/pull/87",
+        author: "octocat",
+        commentsCount: 5,
+        isDraft: false,
+        reviewDecision: "CHANGES_REQUESTED",
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        number: 88,
+        title: "refactor: extract auth middleware",
+        repo: "api-server",
+        repoFullName: "acme/api-server",
+        url: "https://github.com/acme/api-server/pull/88",
+        author: "octocat",
+        commentsCount: 0,
+        isDraft: true,
+        reviewDecision: "",
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        number: 31,
+        title: "docs: update API reference for v2 endpoints",
+        repo: "docs",
+        repoFullName: "acme/docs",
+        url: "https://github.com/acme/docs/pull/31",
+        author: "octocat",
+        commentsCount: 1,
+        isDraft: false,
+        reviewDecision: "REVIEW_REQUIRED",
+        updatedAt: new Date().toISOString(),
+      },
+    ],
+    reviewRequests: [
+      {
+        number: 256,
+        title: "feat: implement OAuth2 PKCE flow",
+        repo: "auth-service",
+        repoFullName: "acme/auth-service",
+        url: "https://github.com/acme/auth-service/pull/256",
+        author: "hubot",
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        number: 143,
+        title: "fix: correct timezone handling in date picker",
+        repo: "web-app",
+        repoFullName: "acme/web-app",
+        url: "https://github.com/acme/web-app/pull/143",
+        author: "mona",
+        updatedAt: new Date().toISOString(),
+      },
+    ],
+    actionRequired: [
+      {
+        number: 87,
+        title: "fix: resolve memory leak in WebSocket handler",
+        repo: "api-server",
+        repoFullName: "acme/api-server",
+        url: "https://github.com/acme/api-server/pull/87",
+        reason: "comment",
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        number: 256,
+        title: "feat: implement OAuth2 PKCE flow",
+        repo: "auth-service",
+        repoFullName: "acme/auth-service",
+        url: "https://github.com/acme/auth-service/pull/256",
+        reason: "review_requested",
+        updatedAt: new Date().toISOString(),
+        author: "hubot",
+      },
+    ],
+    lastUpdated: new Date(),
+    isLoading: false,
+    error: null,
+  };
+}
+
+export function useGitHub(intervalMs: number, demo = false) {
+  const [data, setData] = useState<DashboardData>(() => demo ? getDemoData() : {
     actionRequired: [],
     myPRs: [],
     reviewRequests: [],
@@ -247,6 +347,7 @@ export function useGitHub(intervalMs: number) {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const refresh = useCallback(async () => {
+    if (demo) return;
     setData((prev) => ({ ...prev, isLoading: true, error: null }));
     try {
       const [username, myPRs, reviewRequests, notifications] =
@@ -279,18 +380,19 @@ export function useGitHub(intervalMs: number) {
         error: err instanceof Error ? err.message : String(err),
       }));
     }
-  }, [data.username]);
+  }, [data.username, demo]);
 
   useEffect(() => {
-    refresh();
+    if (!demo) refresh();
   }, []);
 
   useEffect(() => {
+    if (demo) return;
     intervalRef.current = setInterval(refresh, intervalMs);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [refresh, intervalMs]);
+  }, [refresh, intervalMs, demo]);
 
   return { data, refresh };
 }

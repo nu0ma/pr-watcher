@@ -4,6 +4,7 @@ import { App } from "./app.js";
 
 const args = process.argv.slice(2);
 let intervalMinutes = 10;
+let demo = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === "--interval" || args[i] === "-i") {
@@ -13,9 +14,12 @@ for (let i = 0; i < args.length; i++) {
     }
     i++;
   }
+  if (args[i] === "--demo") {
+    demo = true;
+  }
 }
 
-const { waitUntilExit } = render(<App intervalMinutes={intervalMinutes} />, {
+const { waitUntilExit } = render(<App intervalMinutes={intervalMinutes} demo={demo} />, {
   alternateScreen: true,
 });
 
