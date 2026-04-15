@@ -12,7 +12,7 @@ pr-watcher (`@nu0ma/pr-watcher`) is a terminal dashboard for monitoring GitHub p
 bun install              # Install dependencies
 bun run dev              # Run in watch mode (auto-restart on file changes)
 bun run start            # Run once
-bun run build            # Bundle to dist/cli.js (ESM, node target, external packages)
+bun run build            # Bundle to dist/cli.js via tsdown (minified, tree-shaken, ESM)
 bun run typecheck        # TypeScript type checking (tsc --noEmit)
 ```
 
