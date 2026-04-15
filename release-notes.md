@@ -1,5 +1,5 @@
 ## What's Changed
-* feat: improve PR row display with title wrapping and comment count by @nu0ma in https://github.com/nu0ma/pr-watcher/pull/24
+* fix: resolve stale refresh closure and add refetch on terminal focus by @nu0ma in https://github.com/nu0ma/pr-watcher/pull/26
 
 
-**Full Changelog**: https://github.com/nu0ma/pr-watcher/compare/v0.1.5...v0.1.6
+**Full Changelog**: https://github.com/nu0ma/pr-watcher/compare/v0.1.6...v0.1.7
