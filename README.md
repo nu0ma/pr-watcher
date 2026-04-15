@@ -4,6 +4,8 @@ A CLI dashboard for real-time monitoring of GitHub PR status in your terminal.
 
 Displays your created PRs, review requests, and items requiring action at a glance.
 
+![pr-watcher screenshot](./docs/screenshot.png)
+
 ## Prerequisites
 
 - [Bun](https://bun.sh/) installed
