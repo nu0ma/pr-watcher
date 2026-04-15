@@ -10,11 +10,13 @@ interface PRRowProps {
   title: string;
   url: string;
   author?: string;
+  commentsCount?: number;
   status?: string;
   statusColor?: string;
   repoWidth?: number;
   numberWidth?: number;
   authorWidth?: number;
+  commentsWidth?: number;
   statusWidth?: number;
   showRepo?: boolean;
 }
@@ -25,11 +27,13 @@ export function PRRow({
   title,
   url,
   author,
+  commentsCount,
   status,
   statusColor = "white",
   repoWidth = 24,
   numberWidth = 8,
   authorWidth = 16,
+  commentsWidth = 8,
   statusWidth = 20,
   showRepo = true,
 }: PRRowProps) {
@@ -59,6 +63,13 @@ export function PRRow({
         <Box width={statusWidth} flexShrink={0}>
           <Text color={statusColor} wrap="truncate-end">
             {status}
+          </Text>
+        </Box>
+      )}
+      {commentsCount !== undefined && (
+        <Box width={commentsWidth} flexShrink={0}>
+          <Text color={commentsCount > 0 ? "yellow" : "gray"}>
+            💬 {commentsCount}
           </Text>
         </Box>
       )}

@@ -6,6 +6,7 @@ interface SectionProps {
   title: string;
   count: number;
   color: string;
+  showComments?: boolean;
   children: ReactNode;
 }
 
@@ -14,6 +15,7 @@ export function Section({
   title,
   count,
   color,
+  showComments = false,
   children,
 }: SectionProps) {
   return (
@@ -50,6 +52,13 @@ export function Section({
             STATUS
           </Text>
         </Box>
+        {showComments && (
+          <Box width={8} flexShrink={0}>
+            <Text dimColor bold>
+              💬
+            </Text>
+          </Box>
+        )}
       </Box>
       {children}
     </Box>
