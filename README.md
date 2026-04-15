@@ -18,20 +18,20 @@ gh auth status  # Check authentication status
 
 ```sh
 # bun
-bun add -g pr-watcher
+bun add -g @nu0ma/pr-watcher
 
 # npm
-npm install -g pr-watcher
+npm install -g @nu0ma/pr-watcher
 ```
 
 Or run directly without installing:
 
 ```sh
 # bun
-bunx pr-watcher
+bunx @nu0ma/pr-watcher
 
 # npm
-npx pr-watcher
+npx @nu0ma/pr-watcher
 ```
 
 ## Usage
