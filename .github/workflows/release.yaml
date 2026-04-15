@@ -1,0 +1,183 @@
+name: Release
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - closed
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g., 1.2.3)"
+        required: false
+        type: string
+
+jobs:
+  release:
+    if: |
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'Release')) ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Get package info
+        id: package
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$INPUT_VERSION" ]; then
+            VERSION="$INPUT_VERSION"
+            if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "❌ Invalid semver format: $VERSION"
+              echo "Expected format: X.Y.Z (e.g., 1.2.3)"
+              exit 1
+            fi
+          else
+            VERSION=$(node -p "require('./package.json').version")
+          fi
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag exists
+        id: tag-check
+        env:
+          VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.tag-check.outputs.exists == 'false'
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        if: steps.tag-check.outputs.exists == 'false'
+        run: bun run build
+
+      - name: Verify build output
+        if: steps.tag-check.outputs.exists == 'false'
+        run: |
+          if [ ! -f "dist/cli.js" ]; then
+            echo "❌ Build failed - dist/cli.js not found"
+            exit 1
+          fi
+          echo "✅ Build verification successful"
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Publish to npm with provenance
+        if: steps.tag-check.outputs.exists == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
+
+      - name: Create GitHub Release with tag
+        id: create-release
+        if: steps.tag-check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          EVENT_NAME: ${{ github.event_name }}
+          VERSION: ${{ steps.package.outputs.version }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            RELEASE_URL=$(gh release create "v${VERSION}" \
+              --title "v${VERSION}" \
+              --target "${COMMIT_SHA}" \
+              --generate-notes)
+          else
+            printf '%s\n' "$PR_BODY" > release_notes.md
+            RELEASE_URL=$(gh release create "v${VERSION}" \
+              --title "v${VERSION}" \
+              --target "${COMMIT_SHA}" \
+              --notes-file release_notes.md)
+          fi
+          echo "url=$RELEASE_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR - Success
+        if: |
+          always() &&
+          github.event_name == 'pull_request' &&
+          steps.tag-check.outputs.exists == 'false' &&
+          success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          VERSION: ${{ steps.package.outputs.version }}
+          PACKAGE_NAME: ${{ steps.package.outputs.name }}
+          RELEASE_URL: ${{ steps.create-release.outputs.url }}
+          SERVER_URL: ${{ github.server_url }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          gh pr comment "${PR_NUMBER}" \
+            --body "✅ **Release v${VERSION} completed successfully!**
+
+          - 📦 npm package: https://www.npmjs.com/package/${PACKAGE_NAME}/v/${VERSION}
+          - 🏷️ GitHub Release: ${RELEASE_URL}
+          - 🔗 Workflow run: ${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID}"
+
+      - name: Comment on PR - Tag Exists
+        if: |
+          always() &&
+          github.event_name == 'pull_request' &&
+          steps.tag-check.outputs.exists == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          VERSION: ${{ steps.package.outputs.version }}
+        run: |
+          gh pr comment "${PR_NUMBER}" \
+            --body "⚠️ **Release skipped**: Tag v${VERSION} already exists
+
+          Please check the existing release or update the version in package.json."
+
+      - name: Comment on PR - Failure
+        if: |
+          always() &&
+          github.event_name == 'pull_request' &&
+          steps.tag-check.outputs.exists == 'false' &&
+          failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          VERSION: ${{ steps.package.outputs.version }}
+          SERVER_URL: ${{ github.server_url }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          gh pr comment "${PR_NUMBER}" \
+            --body "❌ **Release v${VERSION} failed**
+
+          Please check the workflow logs for details.
+          🔗 Workflow run: ${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID}"

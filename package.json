@@ -1,15 +1,34 @@
 {
   "name": "pr-watcher",
-  "module": "src/cli.tsx",
+  "version": "0.1.0",
+  "description": "Terminal dashboard for monitoring GitHub pull requests",
   "type": "module",
-  "private": true,
+  "bin": {
+    "pr-watcher": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "start": "bun run src/cli.tsx",
-    "dev": "bun run --watch src/cli.tsx"
+    "dev": "bun run --watch src/cli.tsx",
+    "build": "bun build src/cli.tsx --outdir dist --target node --format esm --packages external",
+    "typecheck": "tsc --noEmit"
   },
-  "bin": {
-    "pr-watcher": "src/cli.tsx"
+  "keywords": [
+    "github",
+    "pull-request",
+    "pr",
+    "dashboard",
+    "cli",
+    "terminal"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nu0ma/pr-viewer.git"
   },
+  "license": "MIT",
+  "author": "nu0ma",
   "devDependencies": {
     "@types/bun": "latest",
     "@types/react": "^19.2.14"
